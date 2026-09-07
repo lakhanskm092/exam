@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neon Timer</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Arial", sans-serif;
+        background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 100%);
+        color: #fff;
+        height: 100vh;
+        overflow: hidden;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        user-select: none;
+      }
+
+      .container {
+        width: 100%;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        position: relative;
+      }
+
+      .timer-display {
+        display: flex;
+        align-items: center;
+        gap: clamp(20px, 5vw, 40px);
+        margin-bottom: clamp(30px, 5vh, 60px);
+      }
+
+      .time-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .time-value {
+        font-size: clamp(80px, 20vw, 200px);
+        font-weight: bold;
+        color: #00f3ff;
+        text-shadow:
+          0 0 10px #00f3ff,
+          0 0 20px #00f3ff,
+          0 0 30px #00f3ff,
+          0 0 40px #00a8cc;
+        line-height: 1;
+        font-family: "Courier New", monospace;
+      }
+
+      .time-label {
+        font-size: clamp(14px, 3vw, 24px);
+        color: #b388ff;
+        text-shadow: 0 0 10px #b388ff;
+        margin-top: clamp(5px, 1vh, 10px);
+        text-transform: uppercase;
+        letter-spacing: 2px;
+      }
+
+      .colon {
+        font-size: clamp(80px, 20vw, 200px);
+        font-weight: bold;
+        color: #ff00ff;
+        text-shadow:
+          0 0 10px #ff00ff,
+          0 0 20px #ff00ff,
+          0 0 30px #ff00ff;
+        line-height: 1;
+        margin-bottom: clamp(30px, 5vh, 60px);
+      }
+
+      .controls {
+        display: flex;
+        gap: clamp(15px, 3vw, 30px);
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+
+      button {
+        background: rgba(0, 243, 255, 0.1);
+        border: 2px solid #00f3ff;
+        color: #00f3ff;
+        padding: clamp(12px, 2vh, 18px) clamp(25px, 4vw, 40px);
+        font-size: clamp(14px, 2.5vw, 18px);
+        font-weight: bold;
+        border-radius: 50px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-shadow: 0 0 5px #00f3ff;
+        box-shadow:
+          0 0 10px rgba(0, 243, 255, 0.3),
+          inset 0 0 10px rgba(0, 243, 255, 0.1);
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+
+      button:hover {
+        background: rgba(0, 243, 255, 0.2);
+        box-shadow:
+          0 0 20px rgba(0, 243, 255, 0.6),
+          inset 0 0 15px rgba(0, 243, 255, 0.2);
+        transform: translateY(-2px);
+      }
+
+      button:active {
+        transform: translateY(0);
+      }
+
+      button.active {
+        background: rgba(255, 0, 255, 0.2);
+        border-color: #ff00ff;
+        color: #ff00ff;
+        text-shadow: 0 0 5px #ff00ff;
+        box-shadow:
+          0 0 20px rgba(255, 0, 255, 0.6),
+          inset 0 0 15px rgba(255, 0, 255, 0.2);
+      }
+
+      .time-controls {
+        display: flex;
+        gap: clamp(10px, 2vw, 20px);
+        margin-bottom: clamp(20px, 3vh, 40px);
+      }
+
+      .time-adjust {
+        display: flex;
+        flex-direction: column;
+        gap: clamp(8px, 1.5vh, 15px);
+        align-items: center;
+      }
+
+      .adjust-label {
+        font-size: clamp(12px, 2vw, 16px);
+        color: #b388ff;
+        text-shadow: 0 0 5px #b388ff;
+      }
+
+      .adjust-buttons {
+        display: flex;
+        gap: clamp(5px, 1vw, 10px);
+      }
+
+      .adjust-btn {
+        width: clamp(40px, 8vw, 60px);
+        height: clamp(40px, 8vw, 60px);
+        padding: 0;
+        font-size: clamp(20px, 4vw, 28px);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .fullscreen-btn {
+        position: fixed;
+        top: clamp(15px, 3vh, 25px);
+        right: clamp(15px, 3vw, 25px);
+        width: clamp(45px, 8vw, 60px);
+        height: clamp(45px, 8vw, 60px);
+        padding: 0;
+        border-radius: 50%;
+        font-size: clamp(18px, 3vw, 24px);
+        z-index: 1000;
+      }
+
+      @media (max-width: 768px) {
+        .timer-display {
+          gap: 15px;
+        }
+
+        .controls {
+          gap: 10px;
+        }
+      }
+
+      @media (orientation: landscape) and (max-width: 900px) {
+        .container {
+          padding: 20px;
+        }
+
+        .timer-display {
+          margin-bottom: 20px;
+        }
+
+        .time-controls {
+          margin-bottom: 15px;
+        }
+      }
+
+      /* Fullscreen styles */
+      .container:fullscreen {
+        background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 100%);
+      }
+
+      .container:-webkit-full-screen {
+        background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 100%);
+      }
+
+      .container:-moz-full-screen {
+        background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 100%);
+      }
+
+      .container:-ms-fullscreen {
+        background: linear-gradient(135deg, #0a0a0f 0%, #1a0a2e 100%);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container" id="container">
+      <button
+        class="fullscreen-btn"
+        id="fullscreenBtn"
+        title="Toggle Fullscreen"
+      >
+        ⛶
+      </button>
+
+      <div class="time-controls">
+        <div class="time-adjust">
+          <span class="adjust-label">Minutes</span>
+          <div class="adjust-buttons">
+            <button class="adjust-btn" id="minusMin">−</button>
+            <button class="adjust-btn" id="plusMin">+</button>
+          </div>
+        </div>
+        <div class="time-adjust">
+          <span class="adjust-label">Seconds</span>
+          <div class="adjust-buttons">
+            <button class="adjust-btn" id="minusSec">−</button>
+            <button class="adjust-btn" id="plusSec">+</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="timer-display">
+        <div class="time-section">
+          <div class="time-value" id="minutes">00</div>
+          <div class="time-label">Minutes</div>
+        </div>
+        <div class="colon">:</div>
+        <div class="time-section">
+          <div class="time-value" id="seconds">00</div>
+          <div class="time-label">Seconds</div>
+        </div>
+      </div>
+
+      <div class="controls">
+        <button id="startBtn">Start</button>
+        <button id="resetBtn">Reset</button>
+      </div>
+    </div>
+
+    <script>
+      let minutes = 0;
+      let seconds = 0;
+      let totalSeconds = 0;
+      let isRunning = false;
+      let timerInterval = null;
+
+      const minutesDisplay = document.getElementById("minutes");
+      const secondsDisplay = document.getElementById("seconds");
+      const startBtn = document.getElementById("startBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const fullscreenBtn = document.getElementById("fullscreenBtn");
+      const container = document.getElementById("container");
+
+      const plusMin = document.getElementById("plusMin");
+      const minusMin = document.getElementById("minusMin");
+      const plusSec = document.getElementById("plusSec");
+      const minusSec = document.getElementById("minusSec");
+
+      function updateDisplay() {
+        minutes = Math.floor(totalSeconds / 60);
+        seconds = totalSeconds % 60;
+        minutesDisplay.textContent = String(minutes).padStart(2, "0");
+        secondsDisplay.textContent = String(seconds).padStart(2, "0");
+      }
+
+      function startTimer() {
+        if (totalSeconds <= 0) return;
+
+        if (isRunning) {
+          // Pause
+          clearInterval(timerInterval);
+          isRunning = false;
+          startBtn.textContent = "Start";
+          startBtn.classList.remove("active");
+        } else {
+          // Start
+          isRunning = true;
+          startBtn.textContent = "Pause";
+          startBtn.classList.add("active");
+
+          timerInterval = setInterval(() => {
+            if (totalSeconds > 0) {
+              totalSeconds--;
+              updateDisplay();
+            } else {
+              clearInterval(timerInterval);
+              isRunning = false;
+              startBtn.textContent = "Start";
+              startBtn.classList.remove("active");
+              playNotification();
+            }
+          }, 1000);
+        }
+      }
+
+      function resetTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+        totalSeconds = 0;
+        updateDisplay();
+        startBtn.textContent = "Start";
+        startBtn.classList.remove("active");
+      }
+
+      function playNotification() {
+        // Visual notification
+        document.body.style.animation = "flash 0.5s ease-in-out 3";
+        setTimeout(() => {
+          document.body.style.animation = "";
+        }, 1500);
+      }
+
+      function adjustTime(amount, type) {
+        if (isRunning) return; // Don't adjust while running
+
+        if (type === "minutes") {
+          totalSeconds += amount * 60;
+        } else {
+          totalSeconds += amount;
+        }
+
+        if (totalSeconds < 0) totalSeconds = 0;
+        if (totalSeconds > 5999) totalSeconds = 5999; // Max 99:59
+
+        updateDisplay();
+      }
+
+      function toggleFullscreen() {
+        if (
+          !document.fullscreenElement &&
+          !document.webkitFullscreenElement &&
+          !document.mozFullScreenElement &&
+          !document.msFullscreenElement
+        ) {
+          // Enter fullscreen
+          if (container.requestFullscreen) {
+            container.requestFullscreen();
+          } else if (container.webkitRequestFullscreen) {
+            container.webkitRequestFullscreen();
+          } else if (container.mozRequestFullScreen) {
+            container.mozRequestFullScreen();
+          } else if (container.msRequestFullscreen) {
+            container.msRequestFullscreen();
+          }
+          fullscreenBtn.textContent = "✕";
+        } else {
+          // Exit fullscreen
+          if (document.exitFullscreen) {
+            document.exitFullscreen();
+          } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+          } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+          } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+          }
+          fullscreenBtn.textContent = "⛶";
+        }
+      }
+
+      // Event Listeners
+      startBtn.addEventListener("click", startTimer);
+      resetBtn.addEventListener("click", resetTimer);
+      fullscreenBtn.addEventListener("click", toggleFullscreen);
+
+      plusMin.addEventListener("click", () => adjustTime(1, "minutes"));
+      minusMin.addEventListener("click", () => adjustTime(-1, "minutes"));
+      plusSec.addEventListener("click", () => adjustTime(10, "seconds"));
+      minusSec.addEventListener("click", () => adjustTime(-10, "seconds"));
+
+      // Keyboard support
+      document.addEventListener("keydown", (e) => {
+        if (e.code === "Space") {
+          e.preventDefault();
+          startTimer();
+        } else if (e.code === "KeyR") {
+          resetTimer();
+        } else if (e.code === "KeyF") {
+          toggleFullscreen();
+        }
+      });
+
+      // Listen for fullscreen changes
+      document.addEventListener("fullscreenchange", () => {
+        fullscreenBtn.textContent = document.fullscreenElement ? "✕" : "⛶";
+      });
+
+      // Initialize
+      updateDisplay();
+
+      // Add flash animation
+      const style = document.createElement("style");
+      style.textContent = `
+            @keyframes flash {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.5; }
+            }
+        `;
+      document.head.appendChild(style);
+    </script>
+  </body>
+</html>
